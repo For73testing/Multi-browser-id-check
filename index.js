@@ -141,13 +141,15 @@ function getProxyDetails() {
 }
 
 // =====================================================
-// BOT RUNNER (SINGLE BROWSER, COOKIE CLEAR & FRESH RELOAD PER NUMBER)
+// BOT RUNNER
 // =====================================================
 async function startBot() {
-    const numbers = getNumbersList();
+    const allNumbers = getNumbersList();
+    // Process up to 100 numbers for this batch run
+    const numbers = allNumbers.slice(0, 100);
     const proxy = getProxyDetails();
 
-    console.log(`LOG: Total ${numbers.length} numbers loaded.`);
+    console.log(`LOG: Total numbers loaded: ${allNumbers.length}. Processing batch of ${numbers.length} numbers.`);
 
     let cloneList = [];
     let createList = [];
@@ -191,7 +193,7 @@ async function startBot() {
 
     const IDENTIFY_URL = "https://www.facebook.com/login/identify/";
 
-    // Loop through all numbers
+    // Loop through current batch of numbers
     for (let i = 0; i < numbers.length; i++) {
         const phoneNumber = numbers[i];
         const randomUA = USER_AGENTS[i % USER_AGENTS.length];
@@ -250,7 +252,6 @@ async function startBot() {
                 await client.send('Network.clearBrowserCookies');
                 await client.send('Network.clearBrowserCache');
             } catch (e) {
-                // Fallback client clearing
                 try {
                     const cookies = await page.cookies();
                     if (cookies.length > 0) {
@@ -267,17 +268,17 @@ async function startBot() {
     await browser.close();
 
     console.log("\n======================================");
-    console.log("LOG: Process complete! Sending final files to Telegram...");
+    console.log("LOG: Process complete! Sending current batch files to Telegram...");
     console.log("======================================\n");
 
     if (cloneList.length > 0) {
         const cloneBuffer = Buffer.from(cloneList.join("\n"), "utf-8");
-        await sendTelegramDocument(CLONE_CHAT_ID, cloneBuffer, "clone.txt", "📁 Final Clone Numbers List");
+        await sendTelegramDocument(CLONE_CHAT_ID, cloneBuffer, "clone.txt", "📁 Current Batch Clone Numbers List");
     }
 
     if (createList.length > 0) {
         const createBuffer = Buffer.from(createList.join("\n"), "utf-8");
-        await sendTelegramDocument(CREATE_CHAT_ID, createBuffer, "create.txt", "📁 Final Create Numbers List");
+        await sendTelegramDocument(CREATE_CHAT_ID, createBuffer, "create.txt", "📁 Current Batch Create Numbers List");
     }
 }
 
